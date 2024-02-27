@@ -51,11 +51,12 @@ jobs:
             echo "Version mismatch" >&2
             exit 1
           else
-            echo "version=$DOWNLOADED_VERSION" >> $GITHUB_ENV
+            echo "version=$DOWNLOADED_VERSION" >> $GITHUB_OUTPUT
           fi
 
           # Package the palworld folder
           tar -czf palworld-server.tar.gz -C palworld ./palworld
+          sha256sum palworld-server.tar.gz | awk '{print "sha256="$1}' >> $GITHUB_OUTPUT
 
       - name: Check version tag
         id: check-tag
@@ -83,11 +84,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.check.outputs.version }}
+          DIGEST: ${{ steps.check.outputs.sha256 }}
         run: |
           gh release create "build-${VERSION}" \
               --repo="$GITHUB_REPOSITORY" \
               --title="Palworld Server build ${VERSION}" \
-              --notes="Build ${VERSION}" \
+              --notes="Build: \`${VERSION}\`\nSHA256 Digest: \`${DIGEST}\`" \
 
       - name: Upload Build
         if: steps.check-tag.outputs.tag-exists == 'false'
