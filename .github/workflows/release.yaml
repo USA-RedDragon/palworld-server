@@ -45,7 +45,7 @@ jobs:
 
           # Now we read ./palworld/steamapps/appmanifest_2394010.acf to get the build id
           DOWNLOADED_VERSION="$(grep -oP '"buildid"\s*"\K[^"]+' ./palworld/steamapps/appmanifest_2394010.acf)"
-          DOWNLOADED_DIGEST="$(sha256sum <(find ./palworld -type f -exec sha256sum {} \; | sort)) | awk '{print $1}'"
+          DOWNLOADED_DIGEST="$(sha256sum <(find ./palworld -type f -exec sha256sum {} \; | sort)) | awk '{print \$1}'"
 
           # We need to error if the DOWNLOADED_VERSION or DOWNLOADED_DIGEST are empty or don't match the current version
           if [ -z "$DOWNLOADED_VERSION" ] || [ -z "$DOWNLOADED_DIGEST" ]; then
