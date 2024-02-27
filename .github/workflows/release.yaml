@@ -89,7 +89,8 @@ jobs:
           gh release create "build-${VERSION}" \
               --repo="$GITHUB_REPOSITORY" \
               --title="Palworld Server build ${VERSION}" \
-              --notes="Build: \`${VERSION}\`\nSHA256 Digest: \`${DIGEST}\`" \
+              --notes="Build: \`${VERSION}\` \
+          SHA256 Digest: \`${DIGEST}\`"
 
       - name: Upload Build
         if: steps.check-tag.outputs.tag-exists == 'false'
@@ -97,4 +98,4 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.check.outputs.version }}
         run:
-          gh release upload "$VERSION" --repo="$GITHUB_REPOSITORY" palworld-server.tar.gz
+          gh release upload "build-${VERSION}" --repo="$GITHUB_REPOSITORY" palworld-server.tar.gz
