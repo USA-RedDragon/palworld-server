@@ -6,7 +6,7 @@
   "regexManagers": [
       {
           "fileMatch": [
-              "(^|/)\\.github\\/workflows\\/.*\\.yaml$"
+              "(^|/)\\.github\\/workflows\\/release\\.yaml$"
           ],
           "matchStrings": [
               "STEAMCMD_IMAGE: (?<depName>.*?):(?<currentValue>.*?)@(?<currentDigest>sha256:[a-f0-9]+)"

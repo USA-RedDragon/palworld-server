@@ -5,9 +5,6 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:
 
-env:
-  STEAMCMD_IMAGE: ghcr.io/usa-reddragon/steamcmd:main@sha256:334010d656a226879adc3f0099a5ebcbe87670db2a814863726001cb4ba30bb6
-
 jobs:
   check:
     runs-on: ubuntu-22.04
@@ -16,31 +13,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Palworld with SteamCMD
-        run: |
-          mkdir -p palworld
-          sudo chown -R 1000:1000 palworld
-          docker run --rm -i \
-            -v ./palworld:/palworld \
-            ${STEAMCMD_IMAGE} \
-            +force_install_dir /palworld +login anonymous +app_update 2394010 validate +quit
-          sudo chown -R $USER:$USER palworld
-        env:
-          STEAMCMD_IMAGE: ${{ env.STEAMCMD_IMAGE }}
-
       - name: Check app build number
         id: check
         run: |
           set -exuo pipefail
           CURRENT_VERSION="$(cat .version)"
+          LATEST_BUILD_ID="$(curl -fSsL https://api.steamcmd.net/v1/info/2394010 | jq -r '.data["2394010"].depots.branches.public.buildid')"
 
-          # Now we read ./palworld/steamapps/appmanifest_2394010.acf to get the build id
-          DOWNLOADED_VERSION="$(grep -oP '"buildid"\s*"\K[^"]+' ./palworld/steamapps/appmanifest_2394010.acf)"
+          echo "build-id=$LATEST_BUILD_ID" >> $GITHUB_OUTPUT
 
-          echo "build-id=$DOWNLOADED_VERSION" >> $GITHUB_OUTPUT
-
-          if [ "$CURRENT_VERSION" != "$DOWNLOADED_VERSION" ]; then
-            echo -n "${DOWNLOADED_VERSION}" > .version
+          if [ "$CURRENT_VERSION" != "$LATEST_BUILD_ID" ]; then
+            echo -n "${LATEST_BUILD_ID}" > .version
             echo "new-release=true" >> $GITHUB_OUTPUT
           fi
 

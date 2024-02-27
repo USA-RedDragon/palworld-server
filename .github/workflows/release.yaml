@@ -73,6 +73,7 @@ jobs:
 
       - name: Generate GitHub App Token
         uses: actions/create-github-app-token@v1
+        if: steps.check-tag.outputs.tag-exists == 'false'
         id: app-token
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
