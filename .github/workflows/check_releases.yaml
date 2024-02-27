@@ -50,6 +50,7 @@ jobs:
       - name: Generate GitHub App Token
         uses: actions/create-github-app-token@v1
         id: app-token
+        if: steps.check.outputs.new-release == 'true'
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
