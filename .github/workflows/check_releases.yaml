@@ -32,6 +32,11 @@ jobs:
           CURRENT_VERSION="$(cat .version)"
           CURRENT_DIGEST="$(cat .digest)"
 
+          ls -lah
+          echo
+          echo
+          ls -lah ./palworld
+
           # Now we read ./palworld/steamapps/appmanifest_2394010.acf to get the build id
           DOWNLOADED_VERSION="$(grep -oP '"buildid"\s*"\K[^"]+' ./palworld/steamapps/appmanifest_2394010.acf)"
           DOWNLOADED_DIGEST="$(sha256sum <(find ./palworld -type f -exec sha256sum {} \; | sort)) | awk '{print $1}'"
