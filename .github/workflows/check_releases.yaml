@@ -5,6 +5,9 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:
 
+env:
+  STEAMCMD_IMAGE: ghcr.io/usa-reddragon/steamcmd:main@sha256:334010d656a226879adc3f0099a5ebcbe87670db2a814863726001cb4ba30bb6
+
 jobs:
   check:
     runs-on: ubuntu-22.04
@@ -15,10 +18,12 @@ jobs:
 
       - name: Install Palworld with SteamCMD
         run: |
-            docker run --rm -i \
-            -v ./palworld:/palworld \
-            ghcr.io/usa-reddragon/steamcmd:main \
-            +force_install_dir /palworld +login anonymous +app_update 2394010 validate +quit
+          docker run --rm -i \
+          -v ./palworld:/palworld \
+          ${STEAMCMD_IMAGE} \
+          +force_install_dir /palworld +login anonymous +app_update 2394010 validate +quit
+        env:
+          STEAMCMD_IMAGE: ${{ env.STEAMCMD_IMAGE }}
 
       - name: Check app build number
         id: check
