@@ -37,7 +37,7 @@ jobs:
 
           # Now we read ./palworld/steamapps/appmanifest_2394010.acf to get the build id
           DOWNLOADED_VERSION="$(grep -oP '"buildid"\s*"\K[^"]+' ./palworld/steamapps/appmanifest_2394010.acf)"
-          DOWNLOADED_DIGEST="$(sha256sum <(find ./palworld -type f -exec sha256sum {} \\; | sort)) | awk '{print \$1}'"
+          DOWNLOADED_DIGEST="$(sha256sum <(find ./palworld -type f -exec sha256sum {} \; | sort) | awk '{print $1}')"
 
           echo "digest=$DOWNLOADED_DIGEST" >> $GITHUB_OUTPUT
           echo "build-id=$DOWNLOADED_VERSION" >> $GITHUB_OUTPUT
@@ -67,9 +67,9 @@ jobs:
         run: |
           git commit --signoff -m "Update to build ${{steps.check.outputs.build-id}}" -m "${{steps.check.outputs.build-id}}@${{steps.check.outputs.digest}}" .digest .version
         env:
-          GIT_AUTHOR_NAME: palworld-server-releaser[bot]
+          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          GIT_COMMITTER_NAME: palworld-server-releaser[bot]
+          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
 
       - name: Generate GitHub App Token
