@@ -26,10 +26,12 @@ jobs:
 
       - name: Install Palworld with SteamCMD
         run: |
+          mkdir -p palworld
+          sudo chown -R 1000:1000 palworld
           docker run --rm -i \
-          -v ./palworld:/palworld \
-          ${STEAMCMD_IMAGE} \
-          +force_install_dir /palworld +login anonymous +app_update 2394010 validate +quit
+            -v ./palworld:/palworld \
+            ${STEAMCMD_IMAGE} \
+            +force_install_dir /palworld +login anonymous +app_update 2394010 validate +quit
         env:
           STEAMCMD_IMAGE: ${{ env.STEAMCMD_IMAGE }}
 
