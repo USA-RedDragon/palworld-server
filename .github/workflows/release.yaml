@@ -55,7 +55,7 @@ jobs:
           fi
 
           # Package the palworld folder
-          tar -czf palworld-server.tar.gz -C palworld ./palworld
+          tar -czf palworld-server.tar.gz -C palworld .
           sha256sum palworld-server.tar.gz | awk '{print "sha256="$1}' >> $GITHUB_OUTPUT
 
       - name: Check version tag
