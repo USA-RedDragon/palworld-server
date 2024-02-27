@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.version'
+      - '.digest'
+      - '.github/workflows/release.yaml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Palworld with SteamCMD
+        run: |
+            docker run --rm -i \
+            -v ./palworld:/palworld \
+            ghcr.io/usa-reddragon/steamcmd:main \
+            +force_install_dir /palworld +login anonymous +app_update 2394010 validate +quit
+
+      - name: Check app build number
+        id: check
+        run: |
+          set -euo pipefail
+          CURRENT_VERSION="$(cat .version)"
+          CURRENT_DIGEST="$(cat .digest)"
+
+          # Now we read ./palworld/steamapps/appmanifest_2394010.acf to get the build id
+          DOWNLOADED_VERSION="$(grep -oP '"buildid"\s*"\K[^"]+' ./palworld/steamapps/appmanifest_2394010.acf)"
+          DOWNLOADED_DIGEST="$(sha256sum <(find ./palworld -type f -exec sha256sum {} \; | sort)) | awk '{print $1}'"
+
+          # We need to error if the DOWNLOADED_VERSION or DOWNLOADED_DIGEST are empty or don't match the current version
+          if [ -z "$DOWNLOADED_VERSION" ] || [ -z "$DOWNLOADED_DIGEST" ]; then
+            echo "Download not completed" >&2
+            exit 1
+          elif [ "$DOWNLOADED_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Version mismatch" >&2
+            exit 1
+          elif [ "$DOWNLOADED_DIGEST" != "$CURRENT_DIGEST" ]; then
+            echo "Digest mismatch" >&2
+            exit 1
+          else
+            echo "version=$DOWNLOADED_VERSION" >> $GITHUB_ENV
+            echo "digest=$DOWNLOADED_DIGEST" >> $GITHUB_ENV
+          fi
+
+          # Package the palworld folder
+          tar -czf palworld-server.tar.gz -C palworld ./palworld
+
+      - name: Check version tag
+        id: check-tag
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+          DIGEST: ${{ steps.check.outputs.digest }}
+        run: |
+          set -euo pipefail
+          # Check if the git tag exists with the same name as VERSION
+          if git rev-parse -q --verify "refs/tags/build-${VERSION}" >/dev/null; then
+            echo "tag-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag-exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate GitHub App Token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          repositories: ${{ github.repository.name }}
+
+      - name: Create release
+        if: steps.check-tag.outputs.tag-exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.check.outputs.version }}
+          DIGEST: ${{ steps.check.outputs.digest }}
+        run: |
+          gh release create "build-${VERSION}" \
+              --repo="$GITHUB_REPOSITORY" \
+              --title="Palworld Server build ${VERSION}" \
+              --notes="Build ${VERSION} @ ${DIGEST}" \
+
+      - name: Upload Build
+        if: steps.check-tag.outputs.tag-exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run:
+          gh release upload "$VERSION" --repo="$GITHUB_REPOSITORY" palworld-server.tar.gz
