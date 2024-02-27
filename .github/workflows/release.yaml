@@ -32,6 +32,7 @@ jobs:
             -v ./palworld:/palworld \
             ${STEAMCMD_IMAGE} \
             +force_install_dir /palworld +login anonymous +app_update 2394010 validate +quit
+          sudo chown -R $USER:$USER palworld
         env:
           STEAMCMD_IMAGE: ${{ env.STEAMCMD_IMAGE }}
 
