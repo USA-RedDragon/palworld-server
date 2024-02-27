@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - '.version'
-      - '.digest'
       - '.github/workflows/release.yaml'
 
 concurrency:
@@ -41,25 +40,18 @@ jobs:
         run: |
           set -exuo pipefail
           CURRENT_VERSION="$(cat .version)"
-          CURRENT_DIGEST="$(cat .digest)"
 
           # Now we read ./palworld/steamapps/appmanifest_2394010.acf to get the build id
           DOWNLOADED_VERSION="$(grep -oP '"buildid"\s*"\K[^"]+' ./palworld/steamapps/appmanifest_2394010.acf)"
-          DOWNLOADED_DIGEST="$(sha256sum <(find ./palworld -type f -exec sha256sum {} \; | sort) | awk '{print $1}')"
 
-          # We need to error if the DOWNLOADED_VERSION or DOWNLOADED_DIGEST are empty or don't match the current version
-          if [ -z "$DOWNLOADED_VERSION" ] || [ -z "$DOWNLOADED_DIGEST" ]; then
+          if [ -z "$DOWNLOADED_VERSION" ]; then
             echo "Download not completed" >&2
             exit 1
           elif [ "$DOWNLOADED_VERSION" != "$CURRENT_VERSION" ]; then
             echo "Version mismatch" >&2
             exit 1
-          elif [ "$DOWNLOADED_DIGEST" != "$CURRENT_DIGEST" ]; then
-            echo "Digest mismatch" >&2
-            exit 1
           else
             echo "version=$DOWNLOADED_VERSION" >> $GITHUB_ENV
-            echo "digest=$DOWNLOADED_DIGEST" >> $GITHUB_ENV
           fi
 
           # Package the palworld folder
@@ -69,7 +61,6 @@ jobs:
         id: check-tag
         env:
           VERSION: ${{ steps.check.outputs.version }}
-          DIGEST: ${{ steps.check.outputs.digest }}
         run: |
           set -euo pipefail
           # Check if the git tag exists with the same name as VERSION
@@ -92,12 +83,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.check.outputs.version }}
-          DIGEST: ${{ steps.check.outputs.digest }}
         run: |
           gh release create "build-${VERSION}" \
               --repo="$GITHUB_REPOSITORY" \
               --title="Palworld Server build ${VERSION}" \
-              --notes="Build ${VERSION} @ ${DIGEST}" \
+              --notes="Build ${VERSION}" \
 
       - name: Upload Build
         if: steps.check-tag.outputs.tag-exists == 'false'

@@ -33,13 +33,10 @@ jobs:
         run: |
           set -exuo pipefail
           CURRENT_VERSION="$(cat .version)"
-          CURRENT_DIGEST="$(cat .digest)"
 
           # Now we read ./palworld/steamapps/appmanifest_2394010.acf to get the build id
           DOWNLOADED_VERSION="$(grep -oP '"buildid"\s*"\K[^"]+' ./palworld/steamapps/appmanifest_2394010.acf)"
-          DOWNLOADED_DIGEST="$(sha256sum <(find ./palworld -type f -exec sha256sum {} \; | sort) | awk '{print $1}')"
 
-          echo "digest=$DOWNLOADED_DIGEST" >> $GITHUB_OUTPUT
           echo "build-id=$DOWNLOADED_VERSION" >> $GITHUB_OUTPUT
 
           if [ "$CURRENT_VERSION" != "$DOWNLOADED_VERSION" ]; then
@@ -47,13 +44,8 @@ jobs:
             echo "new-release=true" >> $GITHUB_OUTPUT
           fi
 
-          if [ "$CURRENT_DIGEST" != "$DOWNLOADED_DIGEST" ]; then
-            echo -n "${DOWNLOADED_DIGEST}" > .digest
-            echo "new-digest=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: Setup GPG
-        if: steps.check.outputs.new-release == 'true' || steps.check.outputs.new-digest == 'true'
+        if: steps.check.outputs.new-release == 'true'
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v6
         with:
@@ -63,9 +55,9 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Save changes to repo
-        if: steps.check.outputs.new-release == 'true' || steps.check.outputs.new-digest == 'true'
+        if: steps.check.outputs.new-release == 'true'
         run: |
-          git commit --signoff -m "Update to build ${{steps.check.outputs.build-id}}" -m "${{steps.check.outputs.build-id}}@${{steps.check.outputs.digest}}" .digest .version
+          git commit --signoff -m "Update to build ${{steps.check.outputs.build-id}}" -m "${{steps.check.outputs.build-id}}" .version
         env:
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
@@ -83,13 +75,13 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         id: cpr
-        if: steps.check.outputs.new-release == 'true' || steps.check.outputs.new-digest == 'true'
+        if: steps.check.outputs.new-release == 'true'
         with:
           token: ${{ steps.app-token.outputs.token }}
           branch: automated/launcher-update
           delete-branch: true
           title: Palworld Server ${{steps.check.outputs.build-id}}
-          body: ${{steps.check.outputs.build-id}} @ ${{steps.check.outputs.digest}}
+          body: Build ${{steps.check.outputs.build-id}}
           labels: |
             update
             chore
@@ -97,7 +89,7 @@ jobs:
             autorebase:opt-in
 
       - name: Automerge Pull Request
-        if: (steps.check.outputs.new-release == 'true' || steps.check.outputs.new-digest == 'true') && (steps.cpr.outputs.pull-request-operation == 'created' || steps.cpr.outputs.pull-request-operation == 'updated')
+        if: steps.check.outputs.new-release == 'true' && (steps.cpr.outputs.pull-request-operation == 'created' || steps.cpr.outputs.pull-request-operation == 'updated')
         run: gh pr merge --rebase --auto "$PR_NUMBER"
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
