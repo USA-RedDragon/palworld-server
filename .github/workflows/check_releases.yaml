@@ -89,7 +89,7 @@ jobs:
           branch: automated/launcher-update
           delete-branch: true
           title: Palworld Server ${{steps.check.outputs.build-id}}
-          body: ${{steps.check.outputs.build-id}} @ ${{steps.check.outputs.new-digest}}
+          body: ${{steps.check.outputs.build-id}} @ ${{steps.check.outputs.digest}}
           labels: |
             update
             chore
