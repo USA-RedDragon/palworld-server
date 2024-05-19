@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  STEAMCMD_IMAGE: ghcr.io/usa-reddragon/steamcmd:main@sha256:6aa7662c948e0fb080b086ce654d31a74f3d5202a3320e5d43eb100580141f39
+  STEAMCMD_IMAGE: ghcr.io/usa-reddragon/steamcmd:main@sha256:3d5ff5bb63be6aef388e4a7ded4252eb8dffbf28768034598d86bb3c7c319019
 
 jobs:
   release:
