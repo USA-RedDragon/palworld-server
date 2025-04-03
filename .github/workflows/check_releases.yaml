@@ -48,7 +48,7 @@ jobs:
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
 
       - name: Generate GitHub App Token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         id: app-token
         if: steps.check.outputs.new-release == 'true'
         with:
