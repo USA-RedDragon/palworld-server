@@ -1,17 +1,18 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "local>USA-RedDragon/renovate-configs"
-  ],
-  "regexManagers": [
-      {
-          "fileMatch": [
-              "(^|/)\\.github\\/workflows\\/release\\.yaml$"
-          ],
-          "matchStrings": [
-              "STEAMCMD_IMAGE: (?<depName>.*?):(?<currentValue>.*?)@(?<currentDigest>sha256:[a-f0-9]+)"
-          ],
-          "datasourceTemplate": "docker"
-      }
-  ]
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "local>USA-RedDragon/renovate-configs"
+    ],
+    "customManagers": [
+        {
+            "customType": "regex",
+            "managerFilePatterns": [
+                "/(^|/)\\.github\\/workflows\\/release\\.yaml$/"
+            ],
+            "matchStrings": [
+                "STEAMCMD_IMAGE: (?<depName>.*?):(?<currentValue>.*?)@(?<currentDigest>sha256:[a-f0-9]+)"
+            ],
+            "datasourceTemplate": "docker"
+        }
+    ]
 }
